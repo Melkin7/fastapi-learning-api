@@ -7,11 +7,29 @@ app = FastAPI()
 import os
 
 API_KEY = os.getenv("API_KEY") #or "123456ABCDEF"
+
+# @app.middleware("http")
+# async def check_api_key(request, call_next):
+#     key = request.headers.get("X-API-Key")
+#     if key != API_KEY:
+#         return JSONResponse(status_code=401, content={"message": "Unauthorized"})
+
+#     return await call_next(request)
+
+
 @app.middleware("http")
 async def check_api_key(request, call_next):
+
+    if request.url.path == "/healthz":
+        return await call_next(request)
+
     key = request.headers.get("X-API-Key")
+
     if key != API_KEY:
-        return JSONResponse(status_code=401, content={"message": "Unauthorized"})
+        return JSONResponse(
+            status_code=401,
+            content={"message": "Unauthorized"}
+        )
 
     return await call_next(request)
 
@@ -20,6 +38,10 @@ def welcome():
     return {
         "message": "Welcome to the FastAPI application!"
     }
+
+@app.get("/healthz")
+def health_check():
+    return {"status": "healthy"}
 
 
 @app.get("/users")
